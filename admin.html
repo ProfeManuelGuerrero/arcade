@@ -77,23 +77,27 @@
                 };
 
                 try {
-                    const respuesta = await fetch('/api/guardar-juego', {
+                    const endpoint = `${window.location.origin}/api/guardar-juego`;
+                    const respuesta = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(paquete)
                     });
 
-                    const resultado = await respuesta.json();
+                    let resultado = {};
+                    try { resultado = await respuesta.json(); } catch (e) { /* no JSON */ }
 
                     if (respuesta.ok) {
                         consola.innerText = "¡SISTEMA ACTUALIZADO! REDIRECCIONANDO...";
                         document.getElementById('form-admin').reset();
                         setTimeout(() => { window.location.href = '/'; }, 2000);
                     } else {
-                        consola.innerText = `ERROR: ${resultado.error}`;
+                        consola.innerText = `ERROR: ${resultado.error || respuesta.statusText || 'Respuesta no OK'}`;
+                        console.error('Respuesta no OK:', respuesta.status, resultado);
                     }
                 } catch (err) {
-                    consola.innerText = "FALLO DE CONEXIÓN CON EL SERVIDOR VERCEL.";
+                    consola.innerText = `FALLO DE CONEXIÓN: ${err.message}`;
+                    console.error('Error fetch /api/guardar-juego', err);
                 }
             };
         });

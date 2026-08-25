@@ -6,6 +6,17 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+    console.log('api/guardar-juego invoked, method:', req.method);
+
+    // Soportar preflight CORS y depuración cuando sea necesario
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
@@ -19,7 +30,8 @@ export default async function handler(req, res) {
         }
 
         // 2. Procesar y guardar la imagen físicamente en el servidor de Vercel
-        const rutaUploads = path.join(process.cwd(), 'uploads');
+        // Guardar en la carpeta `public/uploads` para que las imágenes sean accesibles
+        const rutaUploads = path.join(process.cwd(), 'public', 'uploads');
         if (!fs.existsSync(rutaUploads)) {
             fs.mkdirSync(rutaUploads, { recursive: true });
         }
@@ -55,7 +67,8 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, mensaje: 'Juego integrado al servidor con éxito' });
 
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Error interno en el circuito del servidor' });
+        console.error('Error en api/guardar-juego:', error);
+        // Devolver el mensaje de error para facilitar depuración en entorno controlado
+        return res.status(500).json({ error: error.message || 'Error interno en el circuito del servidor' });
     }
 }
