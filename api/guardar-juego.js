@@ -11,15 +11,94 @@ export default async function handler(req, res) {
 
     // Soportar preflight CORS y depuración cuando sea necesario
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
 
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Método no permitido' });
+    // Manejo de edición (PUT) y eliminación (DELETE)
+    if (req.method === 'PUT') {
+        try {
+            const { id, titulo, badge, urlJuego, imagenBase64, nombreImagen } = req.body;
+
+            const rutaJson = path.join(process.cwd(), 'data', 'juegos.json');
+            let listaJuegos = [];
+            if (fs.existsSync(rutaJson)) {
+                const contenido = fs.readFileSync(rutaJson, 'utf-8');
+                listaJuegos = JSON.parse(contenido || '[]');
+            }
+
+            const idx = listaJuegos.findIndex(j => String(j.id) === String(id));
+            if (idx === -1) return res.status(404).json({ error: 'Juego no encontrado' });
+
+            let urlImagenPublica = listaJuegos[idx].urlImagen;
+
+            if (imagenBase64) {
+                const datosLimpio = imagenBase64.replace(/^data:image\/\w+;base64,/, "");
+                const bufferImagen = Buffer.from(datosLimpio, 'base64');
+
+                if (process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME) {
+                    cloudinary.config({
+                        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                        api_key: process.env.CLOUDINARY_API_KEY,
+                        api_secret: process.env.CLOUDINARY_API_SECRET
+                    });
+                    const uploadResult = await new Promise((resolve, reject) => {
+                        const stream = cloudinary.uploader.upload_stream({ folder: 'arcade' }, (error, result) => {
+                            if (error) return reject(error);
+                            resolve(result);
+                        });
+                        stream.end(bufferImagen);
+                    });
+                    urlImagenPublica = uploadResult.secure_url;
+                } else {
+                    try {
+                        const rutaUploads = path.join(process.cwd(), 'public', 'uploads');
+                        if (!fs.existsSync(rutaUploads)) fs.mkdirSync(rutaUploads, { recursive: true });
+                        const nombreUnico = `${Date.now()}_${(nombreImagen||'imagen').replace(/\s+/g, '_')}`;
+                        const rutaImagenFinal = path.join(rutaUploads, nombreUnico);
+                        fs.writeFileSync(rutaImagenFinal, bufferImagen);
+                        urlImagenPublica = `/uploads/${nombreUnico}`;
+                    } catch (e) {
+                        console.error('No se pudo escribir la imagen en disco:', e);
+                    }
+                }
+            }
+
+            listaJuegos[idx] = Object.assign({}, listaJuegos[idx], {
+                titulo: titulo || listaJuegos[idx].titulo,
+                badge: (badge || listaJuegos[idx].badge).toUpperCase(),
+                urlJuego: urlJuego || listaJuegos[idx].urlJuego,
+                urlImagen: urlImagenPublica,
+                fecha: new Date().toISOString()
+            });
+
+            fs.writeFileSync(rutaJson, JSON.stringify(listaJuegos, null, 2));
+            return res.status(200).json({ success: true, mensaje: 'Juego actualizado', juego: listaJuegos[idx] });
+        } catch (err) {
+            console.error('Error PUT api/guardar-juego:', err);
+            return res.status(500).json({ error: err.message || 'Error actualizando juego' });
+        }
+    }
+
+    if (req.method === 'DELETE') {
+        try {
+            const { id } = req.body;
+            const rutaJson = path.join(process.cwd(), 'data', 'juegos.json');
+            let listaJuegos = [];
+            if (fs.existsSync(rutaJson)) {
+                const contenido = fs.readFileSync(rutaJson, 'utf-8');
+                listaJuegos = JSON.parse(contenido || '[]');
+            }
+            const nuevaLista = listaJuegos.filter(j => String(j.id) !== String(id));
+            fs.writeFileSync(rutaJson, JSON.stringify(nuevaLista, null, 2));
+            return res.status(200).json({ success: true, mensaje: 'Juego eliminado' });
+        } catch (err) {
+            console.error('Error DELETE api/guardar-juego:', err);
+            return res.status(500).json({ error: err.message || 'Error eliminando juego' });
+        }
     }
 
     try {

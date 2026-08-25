@@ -1,1 +1,50 @@
-[]
+[
+	{
+		"id": 1692950000001,
+		"titulo": "Space Runner",
+		"badge": "GRUPO A",
+		"urlJuego": "https://example.com/space-runner",
+		"urlImagen": "https://via.placeholder.com/800x450?text=Space+Runner",
+		"fecha": "2026-08-01T10:00:00.000Z"
+	},
+	{
+		"id": 1692950000002,
+		"titulo": "Pixel Quest",
+		"badge": "ALUMNO: MATEO",
+		"urlJuego": "https://example.com/pixel-quest",
+		"urlImagen": "https://via.placeholder.com/800x450?text=Pixel+Quest",
+		"fecha": "2026-08-02T12:00:00.000Z"
+	},
+	{
+		"id": 1692950000003,
+		"titulo": "Cyber Dash",
+		"badge": "ASD",
+		"urlJuego": "https://example.com/cyber-dash",
+		"urlImagen": "https://via.placeholder.com/800x450?text=Cyber+Dash",
+		"fecha": "2026-08-03T14:00:00.000Z"
+	},
+	{
+		"id": 1692950000004,
+		"titulo": "Labyrinth",
+		"badge": "GRUPO B",
+		"urlJuego": "https://example.com/labyrinth",
+		"urlImagen": "https://via.placeholder.com/800x450?text=Labyrinth",
+		"fecha": "2026-08-04T16:00:00.000Z"
+	},
+	{
+		"id": 1692950000005,
+		"titulo": "Robo Rally",
+		"badge": "ALUMNO: SOFIA",
+		"urlJuego": "https://example.com/robo-rally",
+		"urlImagen": "https://via.placeholder.com/800x450?text=Robo+Rally",
+		"fecha": "2026-08-05T18:00:00.000Z"
+	},
+	{
+		"id": 1692950000006,
+		"titulo": "Ocean Rescue",
+		"badge": "GRUPO C",
+		"urlJuego": "https://example.com/ocean-rescue",
+		"urlImagen": "https://via.placeholder.com/800x450?text=Ocean+Rescue",
+		"fecha": "2026-08-06T20:00:00.000Z"
+	}
+]

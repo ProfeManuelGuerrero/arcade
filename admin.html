@@ -28,6 +28,8 @@
             <p style="color: var(--texto-mutado); font-size: 0.9rem; margin-top: 5px;">Sube capturas y enlaces directo al catálogo público</p>
         </header>
 
+        <div id="lista-juegos-admin" style="margin-bottom: 20px;"></div>
+
         <form id="form-admin">
             <div class="grupo-campo">
                 <label>Nombre del Videojuego</label>
@@ -43,63 +45,141 @@
             </div>
             <div class="grupo-campo">
                 <label>Captura de Pantalla Horizontal (16:9)</label>
-                <input type="file" id="imagen" accept="image/*" required style="border: none; padding: 10px 0;">
+                <input type="file" id="imagen" accept="image/*" style="border: none; padding: 10px 0;">
             </div>
-            <button type="submit" class="btn-subir">COMPILAR Y PUBLICAR</button>
+            <div style="display:flex; gap:10px;">
+                <button type="submit" id="btn-enviar" class="btn-subir" style="flex:1;">COMPILAR Y PUBLICAR</button>
+                <button type="button" id="btn-cancelar" style="flex:0 0 auto; background:#334155; color:white; border:none; padding:12px 18px; cursor:pointer;">CANCELAR</button>
+            </div>
             <div id="consola" class="consola-estado">ENVIANDO PAQUETES DE DATOS AL INICIO...</div>
         </form>
     </div>
 
     <script>
+        let editingId = null;
+
+        async function cargarJuegosAdmin() {
+            const cont = document.getElementById('lista-juegos-admin');
+            cont.innerHTML = '<p style="color:var(--texto-mutado); font-family:var(--fuente-gaming)">Cargando juegos...</p>';
+            try {
+                const res = await fetch(`/data/juegos.json?t=${Date.now()}`);
+                const juegos = await res.json();
+                if (!juegos || juegos.length === 0) { cont.innerHTML = '<p style="color:var(--texto-mutado);">No hay juegos registrados.</p>'; return; }
+                cont.innerHTML = '';
+                juegos.forEach(j => {
+                    const row = document.createElement('div');
+                    row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.marginBottom = '10px';
+                    row.innerHTML = `
+                        <img src="${j.urlImagen}" alt="${j.titulo}" style="width:84px; height:47px; object-fit:cover; margin-right:12px; border:1px solid rgba(255,255,255,0.04)">
+                        <div style="flex:1">
+                            <div style="font-family:var(--fuente-gaming); color:var(--neon-magenta); font-size:0.8rem">${j.badge}</div>
+                            <div style="font-weight:700">${j.titulo}</div>
+                        </div>
+                        <div style="display:flex; gap:8px">
+                            <button data-id="${j.id}" class="btn-editar" style="background:#06b6d4; border:none; color:#042028; padding:8px 10px; cursor:pointer">Editar</button>
+                            <button data-id="${j.id}" class="btn-eliminar" style="background:#ff0066; border:none; color:white; padding:8px 10px; cursor:pointer">Eliminar</button>
+                        </div>
+                    `;
+                    cont.appendChild(row);
+                });
+
+                // Attach events
+                document.querySelectorAll('.btn-editar').forEach(b => b.addEventListener('click', async (ev) => {
+                    const id = ev.currentTarget.getAttribute('data-id');
+                    const juego = juegos.find(x => String(x.id) === String(id));
+                    if (!juego) return;
+                    document.getElementById('titulo').value = juego.titulo;
+                    document.getElementById('badge').value = juego.badge;
+                    document.getElementById('urlJuego').value = juego.urlJuego;
+                    editingId = juego.id;
+                    document.getElementById('btn-enviar').innerText = 'GUARDAR CAMBIOS';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }));
+
+                document.querySelectorAll('.btn-eliminar').forEach(b => b.addEventListener('click', async (ev) => {
+                    const id = ev.currentTarget.getAttribute('data-id');
+                    if (!confirm('¿Eliminar este juego?')) return;
+                    const resp = await fetch(`${window.location.origin}/api/guardar-juego`, {
+                        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
+                    });
+                    if (resp.ok) { cargarJuegosAdmin(); } else { alert('Error eliminando'); }
+                }));
+
+            } catch (e) { cont.innerHTML = '<p style="color:var(--neon-magenta);">No se pudo cargar la lista.</p>'; }
+        }
+
         document.getElementById('form-admin').addEventListener('submit', async (e) => {
             e.preventDefault();
             const consola = document.getElementById('consola');
             consola.style.display = 'block';
             consola.innerText = "PROCESANDO IMAGEN EN ALTA RESOLUCIÓN...";
-
             const archivo = document.getElementById('imagen').files[0];
             
             // Transformar la captura de pantalla a Base64 para poder mandarla a la API de Vercel
             const reader = new FileReader();
-            reader.readAsDataURL(archivo);
-            reader.onloadend = async () => {
-                const paquete = {
+            // Si el usuario no seleccionó archivo, leemos sin imagen
+            if (archivo) {
+                reader.readAsDataURL(archivo);
+                reader.onloadend = async () => { await enviarFormulario(reader.result, archivo.name); };
+            } else {
+                await enviarFormulario(null, null);
+            }
+        });
+
+        document.getElementById('btn-cancelar').addEventListener('click', () => {
+            editingId = null; document.getElementById('form-admin').reset(); document.getElementById('btn-enviar').innerText = 'COMPILAR Y PUBLICAR';
+        });
+
+        async function enviarFormulario(imagenBase64, nombreImagen) {
+            const consola = document.getElementById('consola');
+            try {
+                const paqueteBase = {
                     titulo: document.getElementById('titulo').value,
                     badge: document.getElementById('badge').value,
-                    urlJuego: document.getElementById('urlJuego').value,
-                    imagenBase64: reader.result,
-                    nombreImagen: archivo.name
+                    urlJuego: document.getElementById('urlJuego').value
                 };
 
-                try {
-                    const endpoint = `${window.location.origin}/api/guardar-juego`;
-                    const respuesta = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(paquete)
-                    });
+                const endpoint = `${window.location.origin}/api/guardar-juego`;
 
-                    let resultado = {};
-                    try { resultado = await respuesta.json(); } catch (e) { /* no JSON */ }
+                let respuesta, resultado = {};
 
+                if (editingId) {
+                    const body = Object.assign({ id: editingId }, paqueteBase);
+                    if (imagenBase64) { body.imagenBase64 = imagenBase64; body.nombreImagen = nombreImagen; }
+                    respuesta = await fetch(endpoint, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    try { resultado = await respuesta.json(); } catch (e) {}
                     if (respuesta.ok) {
-                        consola.innerText = "¡SISTEMA ACTUALIZADO! REDIRECCIONANDO...";
-                        // Guardar el nuevo juego en sessionStorage para que la página principal lo muestre inmediatamente
-                        if (resultado && resultado.juego) {
-                            try { sessionStorage.setItem('ultimoJuego', JSON.stringify(resultado.juego)); } catch (e) { /* ignore */ }
-                        }
-                        document.getElementById('form-admin').reset();
-                        setTimeout(() => { window.location.href = '/'; }, 1200);
+                        consola.innerText = '¡JUEGO ACTUALIZADO!';
+                        editingId = null; document.getElementById('btn-enviar').innerText = 'COMPILAR Y PUBLICAR';
+                        document.getElementById('form-admin').reset(); cargarJuegosAdmin();
+                        setTimeout(()=>{ window.location.href = '/'; }, 800);
                     } else {
-                        consola.innerText = `ERROR: ${resultado.error || respuesta.statusText || 'Respuesta no OK'}`;
-                        console.error('Respuesta no OK:', respuesta.status, resultado);
+                        consola.innerText = `ERROR: ${resultado.error || respuesta.statusText}`;
                     }
-                } catch (err) {
-                    consola.innerText = `FALLO DE CONEXIÓN: ${err.message}`;
-                    console.error('Error fetch /api/guardar-juego', err);
+                } else {
+                    const body = Object.assign({}, paqueteBase);
+                    if (imagenBase64) { body.imagenBase64 = imagenBase64; body.nombreImagen = nombreImagen; }
+                    respuesta = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    try { resultado = await respuesta.json(); } catch (e) {}
+                    if (respuesta.ok) {
+                        consola.innerText = '¡SISTEMA ACTUALIZADO! REDIRECCIONANDO...';
+                        if (resultado && resultado.juego) {
+                            try { sessionStorage.setItem('ultimoJuego', JSON.stringify(resultado.juego)); } catch (e) {}
+                        }
+                        document.getElementById('form-admin').reset(); cargarJuegosAdmin();
+                        setTimeout(()=>{ window.location.href = '/'; }, 1200);
+                    } else {
+                        consola.innerText = `ERROR: ${resultado.error || respuesta.statusText}`;
+                    }
                 }
-            };
-        });
+            } catch (err) {
+                consola.innerText = `FALLO DE CONEXIÓN: ${err.message}`;
+                console.error('Error enviando formulario', err);
+            }
+        }
+
+        // Cargar lista al abrir admin
+        cargarJuegosAdmin();
     </script>
 </body>
 </html>
