@@ -30,10 +30,6 @@
 
         <form id="form-admin">
             <div class="grupo-campo">
-                <label>Contraseña Maestra</label>
-                <input type="password" id="pass" required placeholder="••••••••">
-            </div>
-            <div class="grupo-campo">
                 <label>Nombre del Videojuego</label>
                 <input type="text" id="titulo" required placeholder="Ej: Cyber Dash 2026">
             </div>
@@ -68,7 +64,6 @@
             reader.readAsDataURL(archivo);
             reader.onloadend = async () => {
                 const paquete = {
-                    contrasena: document.getElementById('pass').value,
                     titulo: document.getElementById('titulo').value,
                     badge: document.getElementById('badge').value,
                     urlJuego: document.getElementById('urlJuego').value,

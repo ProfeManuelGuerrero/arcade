@@ -23,12 +23,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { contrasena, titulo, badge, urlJuego, imagenBase64, nombreImagen } = req.body;
-
-        // 1. Validación de seguridad básica para el profesor
-        if (contrasena !== 'ArcadeProfesor2026') {
-            return res.status(401).json({ error: 'Contraseña de administrador incorrecta' });
-        }
+        const { titulo, badge, urlJuego, imagenBase64, nombreImagen } = req.body;
 
         // 2. Procesar la imagen. Si tienes Cloudinary configurado, subimos allí.
         const datosLimpio = imagenBase64.replace(/^data:image\/\w+;base64,/, "");
