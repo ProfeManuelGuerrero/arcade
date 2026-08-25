@@ -91,9 +91,9 @@ body {
     max-width: 1100px;
     margin: 0 auto;
     display: grid;
-    /* Genera una cuadrícula balanceada para pantallas grandes y móviles */
-    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-    gap: 40px;
+    /* Tarjetas más compactas: ancho mínimo reducido para mostrar más en pantalla */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 28px;
 }
 
 /* Adaptación para pantallas de teléfonos pequeños */
@@ -123,6 +123,7 @@ body {
     padding-top: 56.25%; /* Relación exacta 16:9 de videojuegos */
     overflow: hidden;
     background-color: #070b14;
+    min-height: 160px; /* Garantizar tamaño visual más compacto en pantallas grandes */
 }
 
 .captura-pantalla {
@@ -177,14 +178,14 @@ body {
     font-family: var(--fuente-gaming);
     color: var(--fondo-oscuro);
     background-color: var(--neon-cian);
-    padding: 14px 28px;
+    padding: 10px 18px;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     text-decoration: none;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
     transition: background-color 0.2s ease, transform 0.2s ease;
-    box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 240, 255, 0.35);
 }
 
 .enlace-jugar:hover {
@@ -196,7 +197,7 @@ body {
 
 /* --- BLOQUE DE TEXTO DEBAJO DE LA PORTADA --- */
 .detalles-juego {
-    padding: 20px;
+    padding: 14px 16px;
     background-color: var(--tarjeta-base);
     border-top: 1px solid rgba(255, 255, 255, 0.03);
 }
@@ -213,10 +214,17 @@ body {
 
 .titulo-juego {
     font-family: var(--fuente-gaming);
-    font-size: 1.5rem;
+    font-size: 1.15rem;
     font-weight: 600;
     color: var(--texto-brillante);
     letter-spacing: -0.5px;
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 900px) {
+    .contenedor-galeria { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .area-visual { min-height: 140px; }
+    .titulo-juego { font-size: 1.05rem; }
 }
 
 /* --- PIE DE PÁGINA --- */
