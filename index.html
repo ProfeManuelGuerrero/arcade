@@ -36,10 +36,21 @@
         // Carga los datos del JSON en tiempo real al abrir la web
         async function cargarArcade() {
             const contenedor = document.getElementById('galeria-juegos');
-            try {
-                // Forzamos a Vercel a no cachear el JSON viejo usando un parámetro de tiempo
-                const respuesta = await fetch(`/data/juegos.json?t=${Date.now()}`);
-                const juegos = await respuesta.json();
+                try {
+                    // Si venimos de `admin.html`, puede haber un juego pendiente en sessionStorage
+                    let juegoPendiente = null;
+                    try { juegoPendiente = JSON.parse(sessionStorage.getItem('ultimoJuego')); sessionStorage.removeItem('ultimoJuego'); } catch (e) { juegoPendiente = null; }
+
+                    // Forzamos a Vercel a no cachear el JSON viejo usando un parámetro de tiempo
+                    const respuesta = await fetch(`/data/juegos.json?t=${Date.now()}`);
+                    const juegos = await respuesta.json();
+
+                    // Si existe un juego pendiente y no aparece en el JSON (por entorno serverless), lo añadimos primero
+                    if (juegoPendiente) {
+                        // Evitar duplicados comprobando id
+                        const existe = juegos.some(j => j.id === juegoPendiente.id);
+                        if (!existe) juegos.unshift(juegoPendiente);
+                    }
 
                 if (juegos.length === 0) {
                     contenedor.innerHTML = `<p style="grid-column: 1/-1; text-align: center; font-family: var(--fuente-gaming); color: var(--neon-magenta);">SISTEMA COMPLETO. ESPERANDO PRIMER ENVÍO DE PROYECTOS.</p>`;

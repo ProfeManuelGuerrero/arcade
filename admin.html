@@ -89,8 +89,12 @@
 
                     if (respuesta.ok) {
                         consola.innerText = "¡SISTEMA ACTUALIZADO! REDIRECCIONANDO...";
+                        // Guardar el nuevo juego en sessionStorage para que la página principal lo muestre inmediatamente
+                        if (resultado && resultado.juego) {
+                            try { sessionStorage.setItem('ultimoJuego', JSON.stringify(resultado.juego)); } catch (e) { /* ignore */ }
+                        }
                         document.getElementById('form-admin').reset();
-                        setTimeout(() => { window.location.href = '/'; }, 2000);
+                        setTimeout(() => { window.location.href = '/'; }, 1200);
                     } else {
                         consola.innerText = `ERROR: ${resultado.error || respuesta.statusText || 'Respuesta no OK'}`;
                         console.error('Respuesta no OK:', respuesta.status, resultado);
