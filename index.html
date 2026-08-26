@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeria arcade</title>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="lineas-grid"></div>
+
+    <header class="encabezado-principal">
+        <div class="logo-contenedor">
+            <span class="subtitulo-logo">Especialidad programación</span>
+            <h1 class="titulo-sitio">ARCADE <span class="texto-neon">LEVELUP</span></h1>
+        </div>
+        <p class="descripcion-sitio">Explora y juega los proyectos interactivos desarrollados por la próxima generación de creadores.</p>
+    </header>
+
+
+    <!-- La cuadrícula se llena automáticamente -->
+    <main class="contenedor-galeria" id="galeria-juegos">
+        <p style="grid-column: 1/-1; text-align: center; font-family: var(--fuente-gaming); color: var(--texto-mutado);">CARGANDO INTERFAZ DE JUEGOS...</p>
+    </main>
+
+    <footer class="pie-pagina">
+        <p>Diseñado para mentes interactivas // Especialidad de programación, instituto comercial Linares &copy; 2026</p>
+    </footer>
+
+    <script>
+        // Carga los datos del JSON en tiempo real al abrir la web
+        async function cargarArcade() {
+            const contenedor = document.getElementById('galeria-juegos');
+            try {
+                // Forzamos a Vercel a no cachear el JSON viejo usando un parámetro de tiempo
+                const respuesta = await fetch(`/data/juegos.json?t=${Date.now()}`);
+                const juegos = await respuesta.json();
+
+                if (juegos.length === 0) {
+                    contenedor.innerHTML = `<p style="grid-column: 1/-1; text-align: center; font-family: var(--fuente-gaming); color: var(--neon-magenta);">SISTEMA COMPLETO. ESPERANDO PRIMER ENVÍO DE PROYECTOS.</p>`;
+                    return;
+                }
+
+                contenedor.innerHTML = ''; // Limpiar el mensaje de carga
+
+                juegos.forEach(juego => {
+                    const tarjeta = document.createElement('article');
+                    tarjeta.className = 'tarjeta-juego-horizontal';
+                    tarjeta.innerHTML = `
+                        <div class="area-visual">
+                            <img src="${juego.urlImagen}" alt="Captura de ${juego.titulo}" class="captura-pantalla" loading="lazy">
+                            <div class="capa-accion">
+                                <a href="${juego.urlJuego}" target="_blank" class="enlace-jugar">
+                                    <span>LANZAR JUEGO</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="detalles-juego">
+                            <div class="badge-genero">${juego.badge}</div>
+                            <h2 class="titulo-juego">${juego.titulo}</h2>
+                        </div>
+                    `;
+                    contenedor.appendChild(tarjeta);
+                });
+
+            } catch (error) {
+                contenedor.innerHTML = `<p style="grid-column: 1/-1; text-align: center; font-family: var(--fuente-gaming); color: var(--neon-magenta);">ERROR AL SINCRONIZAR LA RED ARCADE.</p>`;
+            }
+        }
+
+        // Ejecutar al cargar la página
+        window.onload = cargarArcade;
+    </script>
+</body>
+</html>

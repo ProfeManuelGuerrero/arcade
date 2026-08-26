@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal de Carga | Arcade LevelUp</title>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .contenedor-admin { max-width: 550px; margin: 50px auto; padding: 35px; background: var(--tarjeta-base); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%); border: 1px solid rgba(255,255,255,0.05); }
+        .grupo-campo { margin-bottom: 22px; }
+        .grupo-campo label { display: block; font-family: var(--fuente-gaming); color: var(--neon-magenta); font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
+        .grupo-campo input { width: 100%; padding: 14px; background: #070b14; border: 1px solid rgba(255,255,255,0.08); color: var(--texto-brillante); font-family: var(--fuente-base); font-size: 0.95rem; transition: border-color 0.3s; }
+        .grupo-campo input:focus { border-color: var(--neon-cian); outline: none; }
+        .btn-subir { width: 100%; font-family: var(--fuente-gaming); background: var(--neon-magenta); color: white; padding: 16px; font-weight: 700; border: none; letter-spacing: 2px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(255, 0, 127, 0.3); clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+        .btn-subir:hover { background: white; color: var(--fondo-oscuro); box-shadow: 0 4px 25px rgba(255,255,255,0.5); }
+        .consola-estado { text-align: center; margin-top: 15px; font-family: var(--fuente-gaming); color: var(--neon-cian); display: none; font-size: 0.9rem; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+    <div class="lineas-grid"></div>
+
+    <div class="contenedor-admin">
+        <header style="text-align: center; margin-bottom: 35px;">
+            <h1 style="font-family: var(--fuente-gaming); font-size: 2rem; letter-spacing: -1px;">TERMINAL DE <span class="texto-neon">CARGA</span></h1>
+            <p style="color: var(--texto-mutado); font-size: 0.9rem; margin-top: 5px;">Sube capturas y enlaces directo al catálogo público</p>
+        </header>
+
+        <form id="form-admin">
+            <div class="grupo-campo">
+                <label>Contraseña Maestra</label>
+                <input type="password" id="pass" required placeholder="••••••••">
+            </div>
+            <div class="grupo-campo">
+                <label>Nombre del Videojuego</label>
+                <input type="text" id="titulo" required placeholder="Ej: Cyber Dash 2026">
+            </div>
+            <div class="grupo-campo">
+                <label>Etiqueta / Desarrollador</label>
+                <input type="text" id="badge" required placeholder="Ej: GRUPO A o ALUMNO: MATEO">
+            </div>
+            <div class="grupo-campo">
+                <label>URL de Vercel del Juego</label>
+                <input type="url" id="urlJuego" required placeholder="https://vercel.app">
+            </div>
+            <div class="grupo-campo">
+                <label>Captura de Pantalla Horizontal (16:9)</label>
+                <input type="file" id="imagen" accept="image/*" required style="border: none; padding: 10px 0;">
+            </div>
+            <button type="submit" class="btn-subir">COMPILAR Y PUBLICAR</button>
+            <div id="consola" class="consola-estado">ENVIANDO PAQUETES DE DATOS AL INICIO...</div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('form-admin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const consola = document.getElementById('consola');
+            consola.style.display = 'block';
+            consola.innerText = "PROCESANDO IMAGEN EN ALTA RESOLUCIÓN...";
+
+            const archivo = document.getElementById('imagen').files[0];
+            
+            // Transformar la captura de pantalla a Base64 para poder mandarla a la API de Vercel
+            const reader = new FileReader();
+            reader.readAsDataURL(archivo);
+            reader.onloadend = async () => {
+                const paquete = {
+                    contrasena: document.getElementById('pass').value,
+                    titulo: document.getElementById('titulo').value,
+                    badge: document.getElementById('badge').value,
+                    urlJuego: document.getElementById('urlJuego').value,
+                    imagenBase64: reader.result,
+                    nombreImagen: archivo.name
+                };
+
+                try {
+                    const respuesta = await fetch('/api/guardar-juego', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(paquete)
+                    });
+
+                    const resultado = await respuesta.json();
+
+                    if (respuesta.ok) {
+                        consola.innerText = "¡SISTEMA ACTUALIZADO! REDIRECCIONANDO...";
+                        document.getElementById('form-admin').reset();
+                        setTimeout(() => { window.location.href = '/'; }, 2000);
+                    } else {
+                        consola.innerText = `ERROR: ${resultado.error}`;
+                    }
+                } catch (err) {
+                    consola.innerText = "FALLO DE CONEXIÓN CON EL SERVIDOR VERCEL.";
+                }
+            };
+        });
+    </script>
+</body>
+</html>
